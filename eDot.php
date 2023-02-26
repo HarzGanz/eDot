@@ -1,11 +1,11 @@
 <?php
 
-error_reporting(0);
+//error_reporting(0);
 require 'function.php';
 system('clear');
 echo $orange.$banner.$cln;
 echo "\n\n";
-echo $bold.$fgreen."[-] Bot eDot v2 by CatzBurry \n\n".$cln;
+echo $bold.$fgreen."[-] Bot eDot v3 by CatzBurry\n\n".$cln;
     echo $bold . $lblue . "Commands\n";
     echo "========\n\n";
     echo $bold . $fgreen . "[1]$cln Auto Register With AdaOTP$cln\n";
@@ -67,14 +67,61 @@ if(strpos($getBalance[1], '"success":true,"')) {
 /** END GET BALANCE **/
 
 $loopp = "[-] Jumlah Reff ";
-$kodereff = "[-] Kode Refferal ";
-$refferal = input("$bold$orange$kodereff$cln");
 $loop = input("$bold$orange$loopp$cln");
-
+ulangreff:
+$kodereff = "[-] Kode Refferal ";
+$referral = input("$bold$orange$kodereff$cln");
 echo PHP_EOL;
+
+echo $bold.$orange."[-] Cek Status Reff".$cln.PHP_EOL;
+$index = new Alarmedot();
+checkpoint:
+$device = substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'), 0, 36);
+$getsso = $index->getSso($device);
+$json = json_decode($getsso, true);
+if($json['code'] == 200)
+	{
+		$ssotoken = $json['data']['token']['token_code'];
+		echo $bold.$orange."[-] Token_code ".$cln.": ".$ssotoken.PHP_EOL.PHP_EOL;
+	} else {
+		echo $bold.$red."[-] ".$cln."Failed get token sso device\n";
+                goto checkpoint;
+	}
+
+checkingcode:
+$cek = $index->checkCode($referral,$ssotoken);
+$msc = fetch_value($cek,'"statusCode":',',');
+$msg = fetch_value($cek,'"message":"','"');
+//$tokenalarm="";
+//$telegrambot='';
+//$telegramchatid='';
+if ($msg == "Kode referral ini tidak bisa digunakan karena melebihi kuota"){
+echo $bold.$red."[-] ".$msg.$cln.PHP_EOL.PHP_EOL;
+goto ne;
+}
+if ($msc == 200) {
+echo $bold.$fgreen."[-] ".$msg.$cln.PHP_EOL.PHP_EOL;
+//elegram ("$msg");
+goto gas;
+} else {
+echo $bold.$red."[-] ".$msg.$cln.PHP_EOL.PHP_EOL;
+//telegram ("$msg");
+goto ulangreff;
+}
+ne:
+echo $bold.$red."[-] Waiting ... ".$cln.PHP_EOL.PHP_EOL;
+$cek = $index->checkCode($referral,$ssotoken);
+if ($msc == 200) {
+goto gas;
+} else {
+goto ne;
+}
+gas:
+echo $bold.$green."[-] Open, Lets Go ... ".$cln.PHP_EOL.PHP_EOL;;
+
 for($ia=1; $ia <= $loop; $ia++){
     echo "--------------- \e[1;36m[ $ia/$loop ]\e[0m --------------- ".PHP_EOL;
-	echo PHP_EOL;
+    echo PHP_EOL;
     ulang:
     $deviceId = generateRandomString(36);
     $data = '{"name":"web-sso","secret_key":"3e53440178c568c4f32c170f","device_type":"web","device_id":"'.$deviceId.'"}';
@@ -117,19 +164,19 @@ for($ia=1; $ia <= $loop; $ia++){
         $username = get_between($getUsername[1], '"data":["', '",');
         if ($codeUsername == 200) {
 	    echo PHP_EOL;
-            echo $bold.$fgreen."[-] Status Code 200".$cln.PHP_EOL;
-            echo $bold.$orange."[-] Username ".$cln.": ".$username.PHP_EOL;
+            echo $bold.$orange."[-] Username ".$cln.": ".$username.PHP_EOL.PHP_EOL;
             getnomor:
             $createOrder = curl("https://adaotp.com/api/set-orders/".$apikey."/440");
             $orderID = get_between($createOrder[1], '"order_id":"', '",');
             $messageOrder = get_between($createOrder[1], '"messages":"', '"');
             $nomor = get_between($createOrder[1], '"number":"', '","');
             if(strpos($createOrder[1], '"success":true,"')) {
-                echo $bold.$fgreen."[-] Message ".$cln.$messageOrder.PHP_EOL.PHP_EOL;
-		echo $bols.$orange."[-] Nomor ".$cln.": ".$nomor.PHP_EOL;
+                echo $bold.$fgreen."[-] Message ".$cln.": ".$messageOrder.PHP_EOL;
+		echo $bold.$orange."[-] Nomor ".$cln.": ".$nomor.PHP_EOL;
             } else {
-                echo $bold.$red."[-] Message ".$cln.": ".$messageOrder.PHP_EOL;
-		die;
+                	echo $bold.$red."[-] Gagal Mendapatkan Nomor".$cln.PHP_EOL;
+                	echo $bold.$orange."[-] Message ".$cln.": ".$messageOrder.PHP_EOL.PHP_EOL;
+		        die;
             }
             $data = '{"phone_number":"'.$nomor.'","type":"verify_phone","send_type":"sms"}';
             $lenght = strlen($data);
@@ -147,10 +194,9 @@ for($ia=1; $ia <= $loop; $ia++){
             ];
             $sendOTP = curl("https://api-accounts.edot.id/api/user/send_otp_phone", $data, $headers);
             $codesendOTP = get_between($sendOTP[1], '"code":', ',"');
-            $msgotp = get_between($sendOTP[1], '"data":"', '"}');
+            $msgotp = get_between($sendOTP[1], '"message":"','",');
             if ($codesendOTP == 200) {
-                echo $bold.$fgreen."[-] Status Code 200".$cln.PHP_EOL;
-                echo $bold.fgreen."[-] ".$msgotp.$cln.PHP_EOL;
+                echo $bold.$fgreen."[-] ".$msgotp.$cln.PHP_EOL.PHP_EOL;
                 $time = time();
                 CheckUlangOTP:
                 $getOTP = curl("https://adaotp.com/api/get-orders/".$apikey."/".$orderID, 0, 0);
@@ -160,8 +206,8 @@ for($ia=1; $ia <= $loop; $ia++){
                 $otp = get_between($getOTP[1], '"<#> ', 'adalah');
                 $otpbos = trim($otp);
                 if($otp) {
-                    echo $bold.$fgreeb."[-] Message ".$cln.": ".$messageOTP.PHP_EOL;
-		    echo $bold.$orange."[-] OTP ">$cln.": ".$otpbos.PHP_EOL;
+                    echo $bold.$fgreen."[-] Message ".$cln.": ".$messageOTP.PHP_EOL;
+		    echo $bold.$orange."[-] OTP ".$cln.": ".$otpbos.PHP_EOL;
                 } else {
                     if (time()-$time > 30) {
                         echo $bold.$red."[-] Gagal Mendapatkan OTP".$cln.PHP_EOL;
@@ -189,9 +235,8 @@ for($ia=1; $ia <= $loop; $ia++){
                 $codeverifOTP = get_between($verifotp[1], '"code":', ',"');
                 $msgverif = get_between($verifotp[1], '"data":"', '"}');
                 if ($codeverifOTP == 200) {
-                    echo $bold.$fgreen."[-] Status Code 200".PHP_EOL;
-                    echo "[-] ".$msgverif.$cln.PHP_EOL;
-                    $data = '{"fullname":"'.$fullName.'","email":"","username":"'.$username.'","recovery_email":"","phone_number":"'.$nomor.'","password":"Jumadygantengnihbos11#$","date_of_birth":"2000-01-05","gender":"pria","security_question_id":"1","security_question_answer":"Sukinah","response_type":"code","client_id":"0c21679b392bc480c87c150303ab255d","referral_code":"'.strtoupper($refferal).'"}';
+                    echo $bold.$fgreen."[-] ".$msgverif.$cln.PHP_EOL.PHP_EOL;
+                    $data = '{"fullname":"'.$fullName.'","email":"","username":"'.$username.'","recovery_email":"","phone_number":"'.$nomor.'","password":"Jumadygantengnihbos11#$","date_of_birth":"2000-01-05","gender":"pria","security_question_id":"1","security_question_answer":"Sukinah","response_type":"code","client_id":"0c21679b392bc480c87c150303ab255d","referral_code":"'.strtoupper($referral).'"}';
                     $lenght = strlen($data);
                     $headers = [
                         "Host: api-accounts.edot.id",
@@ -208,19 +253,19 @@ for($ia=1; $ia <= $loop; $ia++){
                     $register = curl("https://api-accounts.edot.id/api/user/register", $data, $headers);
                     $registerfinal = get_between($register[1], '{"redirect_url":"', '"}');
                     if ($registerfinal) {
-                        echo $bold.$fgreen."[-] Sukses Mendaftarkan $username Kode Reff: ".strtoupper($refferal).$cln.PHP_EOL;
-                        echo $bold.$orange."[-] Redirect Url ".$registerfinal.$cln.PHP_EOL;
+                        echo $bold.$fgreen."[-] Sukses Mendaftarkan ".$cln.$username.PHP_EOL;
+                        echo $bold.$orange."[-] Kode Reff ".$cln.": ".strtoupper($referral).PHP_EOL;
+                        echo $bold.$orange."[-] Redirect Url ".$cln.": ".$bold.$fgreen.$registerfinal.$cln.PHP_EOL.PHP_EOL;
                         $finish = curl("https://adaotp.com/api/finish-orders/".$apikey."/".$orderID, 0, 0);
                         $getToken_login = curl($registerfinal, 0, 0);
-                        sleep(10);
                     } else if (strpos($register[1], '"code":400,"')) {
                         $msg_registerfinal = get_between($register[1], '{"message":"', '","');
                         echo $bold.$red."[-] Gagal Mendaftarkan User".$cln.PHP_EOL;
-			echo $bold.$oramge. "[-] Reason ".$cln.": ".$msg_registerfinal.PHP_EOL;
+			            echo $bold.$orange. "[-] Reason ".$cln.": ".$msg_registerfinal.PHP_EOL;
                         goto ulang;
                     } else {
                         echo $bold.$red."[-] Gagal Mendaftarkan User".$cln.PHP_EOL;
-			echo $bold.$oramge. "[-] Reason ".$cln.": ".$msg_registerfinal.PHP_EOL;
+			            echo $bold.$orange. "[-] Reason ".$cln.": ".$msg_registerfinal.PHP_EOL;
                         goto ulang;
                     }
                 } else {
@@ -234,7 +279,7 @@ for($ia=1; $ia <= $loop; $ia++){
                 goto ulang;
             }
         } else {
-            echo $bold.$orange."[-] Gagal Mendaptkan Username".$cln.PHP_EOL;
+            echo $bold.$orange."[-] Gagal Mendapatkan Username".$cln.PHP_EOL.PHP_EOL;
             goto ulang;
         }
     } else {
@@ -245,13 +290,62 @@ for($ia=1; $ia <= $loop; $ia++){
 } elseif($webOTP == 2) {
 echo "------------ \e[1;36mManual Regist With OTP\e[0m -----------".PHP_EOL.PHP_EOL;
 $loopp = "[-] Jumlah Reff ";
-$kodereff = $bold.$orange."[-] Kode Refferal ".$cln."( CATZBURR1 ) ";
-$refferal = input("$kodereff");
 $loop = input("$bold$orange$loopp$cln");
+ulangreff2:
+$kodereff = "[-] Kode Refferal ";
+$referral = input("$bold$orange$kodereff$cln");
 echo PHP_EOL;
+
+echo $bold.$orange."[-] Cek Status Reff".$cln.PHP_EOL;
+$index = new Alarmedot();
+checkpoint2:
+$device = substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'), 0, 36);
+$getsso = $index->getSso($device);
+$json = json_decode($getsso, true);
+if($json['code'] == 200)
+	{
+		$ssotoken = $json['data']['token']['token_code'];
+		echo $bold.$orange."[-] Token_code ".$cln.": ".$ssotoken.PHP_EOL.PHP_EOL;
+	} else {
+		echo $bold.$red."[-] ".$cln."Failed get token sso device\n";
+                goto checkpoint2;
+	}
+
+checkingcode2:
+$cek = $index->checkCode($referral,$ssotoken);
+$msc = fetch_value($cek,'"statusCode":',',');
+$msg = fetch_value($cek,'"message":"','"');
+//$tokenalarm="";
+//$telegrambot='';
+//$telegramchatid='';
+if ($msg == "Kode referral ini tidak bisa digunakan karena melebihi kuota"){
+echo $bold.$red."[-] ".$msg.$cln.PHP_EOL.PHP_EOL;
+goto ne2;
+}
+if ($msc == 200) {
+echo $bold.$fgreen."[-] ".$msg.$cln.PHP_EOL.PHP_EOL;
+//elegram ("$msg");
+goto next2;
+} else {
+echo $bold.$red."[-] ".$msg.$cln.PHP_EOL.PHP_EOL;
+//telegram ("$msg");
+goto ulangreff2;
+}
+ne2:
+echo $bold.$red."[-] Waiting ... ".$cln.PHP_EOL.PHP_EOL;
+next2:
+$cek = $index->checkCode($referral,$ssotoken);
+if ($msc == 200) {
+goto gas2;
+} else {
+goto next2;
+}
+gas2:
+echo $bold.$green."[-] Open, Lets Go ... ".$cln.PHP_EOL.PHP_EOL;;
+
 for($ia=1; $ia <= $loop; $ia++){
-    echo "--------------- \e[1;36m[ $ia/$loop ]\e[0m --------------- ".PHP_EOL;
-    ulang1:
+    echo "--------------- \e[1;36m[ $ia/$loop ]\e[0m --------------- ".PHP_EOL.PHP_EOL;
+    ulang1	:
     $deviceId = generateRandomString(36);
     $data = '{"name":"web-sso","secret_key":"3e53440178c568c4f32c170f","device_type":"web","device_id":"'.$deviceId.'"}';
     $lenght = strlen($data);
@@ -270,7 +364,6 @@ for($ia=1; $ia <= $loop; $ia++){
     $code = get_between($getToken[1], '"code":', ',"');
     $token_code = get_between($getToken[1], '"token_code":"', '",');
     if ($code == 200) {
-	echo PHP_EOL;
         echo $bold.$fgreen."[-] Status Code 200".$cln.PHP_EOL;
         echo $bold.$orange."[-] Token_code ".$cln.": ".$token_code.PHP_EOL;
         $fullName = getName();
@@ -316,7 +409,7 @@ for($ia=1; $ia <= $loop; $ia++){
             $msgotp = get_between($sendOTP[1], '"message":"','",');
             $msgotpsc = get_between($sendOTP[1], '"message":"','"}');
             if ($codesendOTP == 200) {
-                echo $bold.$fgreen."[-] ".$msgotpsc.$cln.PHP_EOL.PHP_EOL;
+                echo $bold.$fgreen."[-] ".$msgotp.$cln.PHP_EOL.PHP_EOL;
                 $time = time();
                 CheckUlangOTP1:
 		$opt = "[-] OTP ";
@@ -341,7 +434,7 @@ for($ia=1; $ia <= $loop; $ia++){
                 $msgverif = get_between($verifotp[1], '"message":"','",');
                 if ($codeverifOTP == 200) {
                     echo $bold.$fgreen."[-] ".$msgverifsc.$cln.PHP_EOL;
-                    $data = '{"fullname":"'.$fullName.'","email":"","username":"'.$username.'","recovery_email":"","phone_number":"'.$nomor.'","password":"Jumadygantengnihbos11#$","date_of_birth":"2000-01-05","gender":"pria","security_question_id":"1","security_question_answer":"Sukinah","response_type":"code","client_id":"0c21679b392bc480c87c150303ab255d","referral_code":"'.strtoupper($refferal).'"}';
+                    $data = '{"fullname":"'.$fullName.'","email":"","username":"'.$username.'","recovery_email":"","phone_number":"'.$nomor.'","password":"Jumadygantengnihbos11#$","date_of_birth":"2000-01-05","gender":"pria","security_question_id":"1","security_question_answer":"Sukinah","response_type":"code","client_id":"0c21679b392bc480c87c150303ab255d","referral_code":"'.strtoupper($referral).'"}';
                     $lenght = strlen($data);
                     $headers = [
                         "Host: api-accounts.edot.id",
@@ -359,7 +452,7 @@ for($ia=1; $ia <= $loop; $ia++){
                     $registerfinal = get_between($register[1], '{"redirect_url":"', '"}');
                     if ($registerfinal) {
                         echo $bold.$fgreen."[-] Sukses Mendaftarkan ".$cln.$username.PHP_EOL;
-			echo $bold.$orange."[-] Kode Reff ".$cln.": ".strtoupper($refferal).PHP_EOL;
+			echo $bold.$orange."[-] Kode Reff ".$cln.": ".strtoupper($referral).PHP_EOL;
                         echo $bold.$orange."[-] Redirect Url ".$cln.": ".$registerfinal.PHP_EOL;
 			echo PHP_EOL;
                         $getToken_login = curl($registerfinal, 0, 0);
@@ -445,7 +538,7 @@ if (strpos($getToken[1], '"code":200,')) {
         ];
         $ouath_token = curl("https://api-accounts.edot.id/api/oauth/token", $data, $headers);
         $access_token = get_between($ouath_token[1], '"access_token":"', '","');
-        echo $bold.$orange."[-] Refresh Token ".$cln.": ".$access_token.PHP_EOL;
+        echo $bold.$orange."[-] Refresh Token ".$cln.": ".$access_token.PHP_EOL.PHP_EOL;
         if (strpos($ouath_token[1], '"access_token":"')) {
             $headers = [
                 "Host: shop-api.edot.id",
@@ -469,7 +562,7 @@ if (strpos($getToken[1], '"code":200,')) {
             $balance = get_between($check_saldo[1], '"desc_balance":"', '","');
             if (strpos($check_saldo[1], '"code":200,')) {
                 echo $bold.$orange."[-] Saldo ".$cln.": ".$balance.PHP_EOL;
-		$nowd = $bold.$orange."[-] Nomor ".$cln."(628xxx)";
+		$nowd = $bold.$orange."[-] Nomor ".$cln;
 		$jml = $bold.$orange."[-] Jumlah WD ".$cln."(Fee Rp 4.620)";
                 $jumlah_wd = input("$jml");
                 $nomor_hp = input("$nowd");
@@ -488,11 +581,13 @@ if (strpos($getToken[1], '"code":200,')) {
                 $request_otp = curl("https://shop-api.edot.id/api/otp/request", $data, $headers);
                 $otp_token = get_between($request_otp[1], '"otp_token":"', '",');
                 if (strpos($request_otp[1], '"code":200,')) {
+		    echo PHP_EOL;
 		    echo $bold.$fgreen."[-] OTP Berhasil Dikirim".$cln.PHP_EOL;
                     echo $bold.$orange."[-] Otp_token ".$cln.": ".$otp_token.PHP_EOL;
 		    ulangotp:
 		    $inpotp = "[-] Otp ";
                     $otp = input("$bold$orange$inpotp$cln");
+		    echo PHP_EOL;
                     $data = '{"otp_code":"'.$otp.'","otp_token":"'.$otp_token.'"}';
                     $headers = [
                         "Host: shop-api.edot.id",
@@ -514,7 +609,7 @@ if (strpos($getToken[1], '"code":200,')) {
                     if (strpos($val_otp[1], '"code":200,')) {
                     echo $bold.$fgreen."[-] ".$mes_otp.$cln.PHP_EOL;
                     ulang_wd:
-                        echo $bold.$orange."[-] Mencoba Withdraw, Mohon Tunggu...".$cln.PHP_EOL.PHP_EOL;
+                        echo $bold.$orange."[-] Mencoba Withdraw, Mohon Tunggu...".$cln.PHP_EOL;
                         $data = '{"account_id":'.$acc_id.',"amount":'.$jumlah_wd.',"otp_code":"'.$otp.'","otp_token":"'.$otp_token.'","type_rekening":"personal","id_store_sso":""}';
                         $headers = [
                             "Host: shop-api.edot.id",
@@ -534,6 +629,7 @@ if (strpos($getToken[1], '"code":200,')) {
 			die;
                         }
 			if ($mes_wd == 'Kode OTP Salah, Mohon cek kembali kode OTP anda') {
+                        echo $bold.$red."[-] ".$cln.$mes_wd.PHP_EOL.PHP_EOL;
 			die;
 			}
 			if ($mes_wd == 'created') {
