@@ -5,12 +5,14 @@ require 'function.php';
 system('clear');
 echo $orange.$banner.$cln;
 echo "\n\n";
-echo $bold.$fgreen."[-] Bot eDot v2 by CatzBurry\n\n".$cln;
+echo $bold.$fgreen."[-] Bot eDot v2 by CatzBurry \n\n".$cln;
     echo $bold . $lblue . "Commands\n";
     echo "========\n\n";
     echo $bold . $fgreen . "[1]$cln Auto Register With AdaOTP$cln\n";
     echo $bold . $fgreen . "[2]$cln Manual Register With OTP$cln\n";
+    echo $bold . $fgreen . "[3]$cln Withdraw$cln\n";
 echo "\n";
+
 web:
 $pilihweb = "[-] Pilih Opsi ";
 $webOTP = input("$bold$orange$pilihweb$cln");
@@ -309,12 +311,11 @@ for($ia=1; $ia <= $loop; $ia++){
                 "Accept-Language: en-GB,en-US;q=0.9,en;q=0.8",
                 "sso-token: ".$token_code,
             ];
-            $sendOTP = curl("https://api-accounts.edot.id/api/user/send_otp_wa", $data, $headers);
+            $sendOTP = curl("https://api-accounts.edot.id/api/user/send_otp_phone", $data, $headers);
             $codesendOTP = get_between($sendOTP[1], '"code":', ',"');
             $msgotp = get_between($sendOTP[1], '"message":"','",');
             $msgotpsc = get_between($sendOTP[1], '"message":"','"}');
             if ($codesendOTP == 200) {
-                echo " -> Otp Sent".PHP_EOL;
                 echo $bold.$fgreen."[-] ".$msgotpsc.$cln.PHP_EOL.PHP_EOL;
                 $time = time();
                 CheckUlangOTP1:
@@ -510,10 +511,10 @@ if (strpos($getToken[1], '"code":200,')) {
                     echo $bold.$red."[-] ".$mes_otp.$cln.PHP_EOL;
 	            goto ulangotp;
 		    }
-                    ulang_wd:
                     if (strpos($val_otp[1], '"code":200,')) {
                     echo $bold.$fgreen."[-] ".$mes_otp.$cln.PHP_EOL;
-                        echo $bold.$orange."[-] Mencoba Withdraw, Mohon Tunggu...".$cln.PHP_EOL;
+                    ulang_wd:
+                        echo $bold.$orange."[-] Mencoba Withdraw, Mohon Tunggu...".$cln.PHP_EOL.PHP_EOL;
                         $data = '{"account_id":'.$acc_id.',"amount":'.$jumlah_wd.',"otp_code":"'.$otp.'","otp_token":"'.$otp_token.'","type_rekening":"personal","id_store_sso":""}';
                         $headers = [
                             "Host: shop-api.edot.id",
@@ -528,13 +529,20 @@ if (strpos($getToken[1], '"code":200,')) {
                         ];
                         $req_wd = curl("https://shop-api.edot.id/api/disburse/withdraw", $data, $headers);
                         $mes_wd = get_between($req_wd[1], '"message":"', '"');
-                        if (strpos($req_wd[1], '"code":200,')) {
-                            echo $bold.$fgreen."[-] Berhasil Withdraw".$cln.PHP_EOL;
-                            echo $bold.$orange."[-] Saldo Terakhir ".$cln.": ".$balance.PHP_EOL;
-                        } else {
-                            echo $bold.$red."[-] ".$mes_wd.$cln.PHP_EOL;
-                            echo $bold.$orange."[-] Saldo Terakhir ".$cln.": ".$balance.PHP_EOL;
+                        if (strpos($req_wd[1], '"status":422,')) {
+                        echo $bold.$red."[-] ".$cln.$mes_wd.PHP_EOL.PHP_EOL;
+			die;
                         }
+			if ($mes_wd == 'Kode OTP Salah, Mohon cek kembali kode OTP anda') {
+			die;
+			}
+			if ($mes_wd == 'created') {
+                        echo $bold.$fgreen."[-] Berhasil Withdraw".$cln.PHP_EOL;
+			die;
+			} else {
+                        echo $bold.$red."[-] Too many requests, please try again later.".$cln.PHP_EOL.PHP_EOL;
+          		goto ulang_wd;
+			}
                     }
                 } else {
                     echo $bold.$orange."[-] Gagal Validasi OTP".$cln.PHP_EOL;
