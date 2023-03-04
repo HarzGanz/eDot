@@ -4,7 +4,7 @@
 1. pkg upgrade && update
 2. pkg install php
 3. pkg install git
-4. git clone https://github.com/CatzBurry/eDot
+4. git clone https://github.com/HarzGanz/eDot
 5. cd eDot
 6. php eDot.php
 
@@ -17,7 +17,7 @@
     <summary><b> Support</b></summary><br/>
 
 
- <a href="https://t.me/CatzBurry"> Telegram</a>
+ <a href="https://t.me/HarzGanzz"> Telegram</a>
 
 </p>
 </details>
